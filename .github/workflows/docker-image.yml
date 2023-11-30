@@ -25,6 +25,6 @@ jobs:
 
     - name: Build the Docker image
       run: |
-        aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin public.ecr.aws/a7r6g6m0
+        aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/a7r6g6m0
         docker build . --file Dockerfile --tag public.ecr.aws/a7r6g6m0/faster-api:${{ github.sha }}
         docker push public.ecr.aws/a7r6g6m0/faster-api:${{ github.sha }}
