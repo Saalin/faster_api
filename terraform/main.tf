@@ -13,9 +13,9 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "faster-api-terraform-state"
-    key            = "terraform/state.tfstate"
-    region         = "eu-central-1"
-    encrypt        = true
+    bucket  = "faster-api-terraform-state"
+    key     = "terraform/state.tfstate"
+    region  = "eu-central-1"
+    encrypt = true
   }
 }
