@@ -3,9 +3,15 @@ name: "Terraform Infrastructure Change Management Pipeline with GitHub Actions"
 on:
   push:
     branches: [ "master" ]
+    paths:
+      - terraform/**
+      - .github/**
   pull_request:
     branches: [ "master" ]
- 
+    paths:
+      - terraform/**
+      - .github/**
+
 env:
  # verbosity setting for Terraform logs
  TF_LOG: INFO
@@ -55,5 +61,5 @@ jobs:
        run: exit 1
  
      - name: Terraform Apply
-       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+       if: github.ref == 'refs/heads/master' && github.event_name == 'push'
        run: terraform apply -auto-approve -input=false
