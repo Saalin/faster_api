@@ -9,9 +9,11 @@
             "type": "python",
             "request": "launch",
             "module": "uvicorn",
-            "cwd": "${workspaceFolder}/app",
+            "cwd": "${workspaceFolder}",
             "args": [
-                "main:app",
+                "--app-dir",
+                "/app",
+                "app.main:app",
                 "--reload"
             ],
             "jinja": true,

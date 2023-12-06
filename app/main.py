@@ -1,26 +1,19 @@
 import os
-import requests
-
-from typing import Union
-
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import HTTPAuthorizationCredentials
-from pydantic import BaseModel
-
-import os
-import json
 import httpx
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import OAuth2PasswordBearer
-from fastapi import Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import jwt
 from jwt import PyJWKClient
 from jose import jwk
-
 from dotenv import load_dotenv
 
+from app.items import item_api
+
 load_dotenv()
+
 
 COGNITO_DOMAIN = os.environ.get("COGNITO_DOMAIN")
 COGNITO_CLIENT_ID = os.environ.get("COGNITO_CLIENT_ID")
@@ -72,46 +65,30 @@ async def get_current_user(token: str = Depends(get_token)) -> str:
         payload = jwt.decode(access_token, public_key, algorithms=["RS256"])
         return payload["sub"]
     except jwt.ExpiredSignatureError:
-        
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
     except jwt.JWTClaimsError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token claims")
     except jwt.JWTError:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
 
+
 app = FastAPI(debug="Hello")
 
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: Union[bool, None] = None
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
+templates = Jinja2Templates(directory="templates")
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
-
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return {"item_name": item.name, "item_id": item_id}
+app.mount("/items", item_api)
 
 @app.get("/", response_class=HTMLResponse)
-async def login():
-    return f"""
-    <html>
-        <head>
-            <title>Login</title>
-        </head>
-        <body>
-            <form action="{AUTH_URL}" method="get">
-                <input type="hidden" name="response_type" value="code" />
-                <input type="hidden" name="client_id" value="{COGNITO_CLIENT_ID}" />
-                <input type="hidden" name="redirect_uri" value="{COGNITO_REDIRECT_URI}" />
-                <input type="submit" value="Login with AWS Cognito" />
-            </form>
-        </body>
-    </html>
-    """
+async def login(request: Request):
+    data = {
+        "AUTH_URL": AUTH_URL,
+        "COGNITO_CLIENT_ID": COGNITO_CLIENT_ID,
+        "COGNITO_REDIRECT_URI": COGNITO_REDIRECT_URI,
+        'request': request, 
+    }
+    return templates.TemplateResponse("index.html", data)
     
 @app.get("/callback")
 async def callback(code: str):
@@ -142,20 +119,12 @@ async def callback(code: str):
 async def chatbot(request: Request, sub: str = Depends(get_current_user)):
     token = request.cookies.get('access_token')
     
-    user_info = get_user_info(token, USERINFO_URL)
-    
-    return f"""
-    <html>
-        <head>
-            <title>Chatbot</title>
-        </head>
-        <body>
-            <h1>Welcome, {sub}!</h1>
-            <p>{user_info}</p>
-            <p>Here you can chat with the robot.</p>
-        </body>
-    </html>
-    """
+    data = {
+        "user_info": get_user_info(token, USERINFO_URL),
+        "sub": sub,
+        'request': request, 
+    }
+    return templates.TemplateResponse("chatbot.html", data)
     
 @app.get("/logout")
 async def logout(request: Request):

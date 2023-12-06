@@ -1,0 +1,14 @@
+<html>
+<head>
+    <title>Item Details</title>
+    <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet">
+</head>
+<body>
+    <form action="{{ AUTH_URL }}" method="get">
+        <input type="hidden" name="response_type" value="code" />
+        <input type="hidden" name="client_id" value="{{ COGNITO_CLIENT_ID }}" />
+        <input type="hidden" name="redirect_uri" value="{{ COGNITO_REDIRECT_URI }}" />
+        <input type="submit" value="Login with AWS Cognito" />
+    </form>
+</body>
+</html>
